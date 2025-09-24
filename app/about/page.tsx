@@ -14,7 +14,7 @@ export default function About() {
               to create meaningful, measurable positive impact in their communities and beyond.
             </p>
             
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">What's New in 4.0</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">What&apos;s New in 4.0</h2>
             <ul className="list-disc list-inside text-gray-600 mb-6 space-y-2">
               <li>Modern Next.js 14 architecture with App Router</li>
               <li>Enhanced performance and SEO optimization</li>

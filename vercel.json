@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "regions": ["iad1"],
+  "functions": {
+    "app/**/*.{js,ts,jsx,tsx}": {
+      "runtime": "nodejs20.x"
+    }
+  }
+}

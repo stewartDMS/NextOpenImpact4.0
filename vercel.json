@@ -4,7 +4,7 @@
   "regions": ["iad1"],
   "functions": {
     "app/**/*.{js,ts,jsx,tsx}": {
-      "runtime": "nodejs20.x"
+      "runtime": "vercel-nodejs@4.0.0"
     }
   }
 }

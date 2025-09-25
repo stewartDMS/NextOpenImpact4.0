@@ -11,6 +11,12 @@ const authOptions = {
   pages: {
     signIn: '/',
   },
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Always redirect to /dashboard after login
+      return '/dashboard'
+    },
+  },
 }
 
 const handler = NextAuth(authOptions)

@@ -1,4 +1,10 @@
+'use client'
+
+import { useAuthModal } from '@/lib/auth-modal-context'
+
 export function Hero() {
+  const { openModal } = useAuthModal()
+
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
       <div className="container text-center text-white">
@@ -9,7 +15,10 @@ export function Hero() {
           Building the future of positive impact through innovative technology and community-driven solutions.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="btn-primary">
+          <button 
+            className="btn-primary"
+            onClick={() => openModal('accountType')}
+          >
             Get Started
           </button>
           <button className="btn-secondary">

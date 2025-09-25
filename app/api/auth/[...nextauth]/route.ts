@@ -13,7 +13,6 @@ const authOptions = {
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Always redirect to /dashboard after login
       return '/dashboard'
     },
   },

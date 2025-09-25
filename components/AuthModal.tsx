@@ -44,7 +44,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 }
 
 function AccountTypeSelection() {
-  const { openModal } = useAuthModal()
+  const { openModal, setAccountType } = useAuthModal()
 
   return (
     <div className="space-y-4">
@@ -53,7 +53,10 @@ function AccountTypeSelection() {
       </p>
       
       <button
-        onClick={() => openModal('signup')}
+        onClick={() => {
+          setAccountType('general')
+          openModal('signup')
+        }}
         className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
       >
         <div className="text-left">
@@ -68,9 +71,11 @@ function AccountTypeSelection() {
       </button>
 
       <button
-        onClick={() => openModal('signup')}
+        onClick={() => {
+          setAccountType('company')
+          openModal('signup')
+        }}
         className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all group"
-        data-account-type="company"
       >
         <div className="text-left">
           <div className="flex items-center mb-2">
@@ -236,7 +241,7 @@ function LoginForm() {
 }
 
 function SignupForm() {
-  const [accountType, setAccountType] = useState<'general' | 'company'>('general')
+  const { accountType, openModal, closeModal, setAccountType } = useAuthModal()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -249,15 +254,6 @@ function SignupForm() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const { openModal, closeModal } = useAuthModal()
-
-  // Detect if we came from company selection
-  React.useEffect(() => {
-    const button = document.querySelector('[data-account-type="company"]')
-    if (button) {
-      setAccountType('company')
-    }
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

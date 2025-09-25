@@ -12,7 +12,7 @@ const authOptions = {
     signIn: '/',
   },
   callbacks: {
-    async redirect({ url, baseUrl }) {
+    async redirect() {
       return '/dashboard'
     },
   },

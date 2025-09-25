@@ -2,6 +2,8 @@ import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Navigation } from '@/components/Navigation'
 import { Footer } from '@/components/Footer'
+import { SessionProvider } from '@/components/SessionProvider'
+import { AuthModalProvider } from '@/lib/auth-modal-context'
 
 export const metadata: Metadata = {
   title: 'NextOpenImpact 4.0',
@@ -29,11 +31,15 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans">
-        <Navigation />
-        <main className="pt-16">
-          {children}
-        </main>
-        <Footer />
+        <SessionProvider>
+          <AuthModalProvider>
+            <Navigation />
+            <main className="pt-16">
+              {children}
+            </main>
+            <Footer />
+          </AuthModalProvider>
+        </SessionProvider>
       </body>
     </html>
   )

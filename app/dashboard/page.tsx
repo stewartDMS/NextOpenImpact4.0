@@ -9,9 +9,10 @@ import { AnalyticsCard, ESGScoreCard, ProjectCard } from '@/components/Dashboard
 import { ProfileSection, TeamManagement } from '@/components/DashboardComponents'
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const { openModal } = useAuthModal()
+const { data: session, status } = useSession()
+console.log("DASHBOARD PAGE SESSION:", session, "STATUS:", status)
+const router = useRouter()
+const { openModal } = useAuthModal()
 
   useEffect(() => {
     if (status === 'loading') return // Still loading

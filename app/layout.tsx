@@ -4,6 +4,7 @@ import { Navigation } from '@/components/Navigation'
 import { Footer } from '@/components/Footer'
 import { SessionProvider } from '@/components/SessionProvider'
 import { AuthModalProvider } from '@/lib/auth-modal-context'
+import { ConfigurationChecker } from '@/components/ConfigurationChecker'
 
 export const metadata: Metadata = {
   title: 'NextOpenImpact 4.0',
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body className="font-sans">
         <SessionProvider>
           <AuthModalProvider>
+            <ConfigurationChecker />
             <Navigation />
             <main className="pt-16">
               {children}

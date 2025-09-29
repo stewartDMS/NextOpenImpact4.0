@@ -1,10 +1,11 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { useAuthModal } from '@/lib/auth-modal-context'
 import { DashboardLayout } from '@/components/DashboardLayout'
+import { logRoutingEvent } from '@/lib/routing-diagnostics'
 
 // Modular components for company dashboard sections
 function CompanyHeader() {
@@ -274,17 +275,37 @@ function ESGCertifications() {
 export default function CompanyDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
   const { openModal } = useAuthModal()
 
   useEffect(() => {
-    if (status === 'loading') return // Still loading
+    logRoutingEvent('company_dashboard_mounted', pathname, status, {
+      hasSession: !!session,
+      timestamp: new Date().toISOString()
+    })
+  }, [pathname, status, session])
+
+  useEffect(() => {
+    if (status === 'loading') {
+      logRoutingEvent('company_dashboard_auth_loading', pathname, 'loading')
+      return // Still loading
+    }
 
     if (!session) {
+      logRoutingEvent('company_dashboard_no_session_redirect', pathname, 'unauthenticated', {
+        redirectTo: '/',
+        reason: 'No session found'
+      })
       openModal('login')
       router.push('/')
       return
     }
-  }, [session, status, router, openModal])
+
+    logRoutingEvent('company_dashboard_access_granted', pathname, 'authenticated', {
+      userId: session.user?.email,
+      accountType: session.user?.accountType || 'general'
+    })
+  }, [session, status, router, openModal, pathname])
 
   if (status === 'loading') {
     return (

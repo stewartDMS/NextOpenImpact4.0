@@ -1,28 +1,52 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { useAuthModal } from '@/lib/auth-modal-context'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { AnalyticsCard, ESGScoreCard, ProjectCard } from '@/components/DashboardWidgets'
 import { ProfileSection, TeamManagement } from '@/components/DashboardComponents'
+import { logRoutingEvent, logEnvironmentDiagnostics } from '@/lib/routing-diagnostics'
 
 export default function DashboardPage() {
-const { data: session, status } = useSession()
-console.log("DASHBOARD PAGE SESSION:", session, "STATUS:", status)
-const router = useRouter()
-const { openModal } = useAuthModal()
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const pathname = usePathname()
+  const { openModal } = useAuthModal()
+
+  // Log environment diagnostics on component mount
+  useEffect(() => {
+    logEnvironmentDiagnostics()
+    logRoutingEvent('dashboard_page_mounted', pathname, status, {
+      hasSession: !!session,
+      timestamp: new Date().toISOString()
+    })
+  }, [pathname, status, session])
+
+  console.log("DASHBOARD PAGE SESSION:", session, "STATUS:", status)
 
   useEffect(() => {
-    if (status === 'loading') return // Still loading
+    if (status === 'loading') {
+      logRoutingEvent('dashboard_auth_loading', pathname, 'loading')
+      return // Still loading
+    }
 
     if (!session) {
+      logRoutingEvent('dashboard_no_session_redirect', pathname, 'unauthenticated', {
+        redirectTo: '/',
+        reason: 'No session found'
+      })
       openModal('login')
       router.push('/')
       return
     }
-  }, [session, status, router, openModal])
+
+    logRoutingEvent('dashboard_access_granted', pathname, 'authenticated', {
+      userId: session.user?.email,
+      accountType: session.user?.accountType || 'general'
+    })
+  }, [session, status, router, openModal, pathname])
 
   if (status === 'loading') {
     return (

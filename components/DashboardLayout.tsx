@@ -1,10 +1,11 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
+import { logRoutingEvent } from '@/lib/routing-diagnostics'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -60,7 +61,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
 
+  // Log routing events for dashboard layout
+  useEffect(() => {
+    if (session) {
+      logRoutingEvent('dashboard_layout_rendered', pathname, 'authenticated', {
+        userId: session.user?.email,
+        accountType: session.user?.accountType || 'general'
+      })
+    }
+  }, [session, pathname])
+
   if (!session) {
+    logRoutingEvent('dashboard_layout_no_session', pathname, 'unauthenticated', {
+      redirectTo: '/login',
+      reason: 'No session in DashboardLayout'
+    })
     router.push('/login')
     return null
   }

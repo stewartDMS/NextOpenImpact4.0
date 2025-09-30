@@ -3,7 +3,7 @@
 import { ReactNode, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { logRoutingEvent } from '@/lib/routing-diagnostics'
 
@@ -57,8 +57,7 @@ const navigationItems = [
 ]
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { data: session } = useSession()
-  const router = useRouter()
+  const { data: session, status } = useSession()
   const pathname = usePathname()
 
   // Log routing events for dashboard layout
@@ -71,12 +70,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [session, pathname])
 
+  // Don't redirect from DashboardLayout - let individual pages handle authentication
+  // This prevents double redirects and ensures consistent behavior
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!session) {
-    logRoutingEvent('dashboard_layout_no_session', pathname, 'unauthenticated', {
-      redirectTo: '/login',
-      reason: 'No session in DashboardLayout'
-    })
-    router.push('/login')
+    // Don't redirect from layout - let the page components handle authentication
+    // This prevents conflicts and provides cleaner error boundaries
     return null
   }
 

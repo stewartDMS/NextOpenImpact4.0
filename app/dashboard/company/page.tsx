@@ -293,9 +293,11 @@ export default function CompanyDashboard() {
 
     if (!session) {
       logRoutingEvent('company_dashboard_no_session_redirect', pathname, 'unauthenticated', {
-        redirectTo: '/',
-        reason: 'No session found'
+        redirectTo: '/dashboard',
+        reason: 'No session found - redirecting to trigger NextAuth flow'
       })
+      // Open login modal and redirect to home to trigger authentication flow
+      // After successful auth, NextAuth will redirect back to /dashboard
       openModal('login')
       router.push('/')
       return

@@ -1,9 +1,8 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
-import { useAuthModal } from '@/lib/auth-modal-context'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { logRoutingEvent } from '@/lib/routing-diagnostics'
 
@@ -274,9 +273,7 @@ function ESGCertifications() {
 
 export default function CompanyDashboard() {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const pathname = usePathname()
-  const { openModal } = useAuthModal()
 
   useEffect(() => {
     logRoutingEvent('company_dashboard_mounted', pathname, status, {
@@ -285,28 +282,8 @@ export default function CompanyDashboard() {
     })
   }, [pathname, status, session])
 
-  useEffect(() => {
-    if (status === 'loading') {
-      logRoutingEvent('company_dashboard_auth_loading', pathname, 'loading')
-      return // Still loading
-    }
-
-    if (!session) {
-      logRoutingEvent('company_dashboard_no_session_redirect', pathname, 'unauthenticated', {
-        redirectTo: '/',
-        reason: 'No session found'
-      })
-      openModal('login')
-      router.push('/')
-      return
-    }
-
-    logRoutingEvent('company_dashboard_access_granted', pathname, 'authenticated', {
-      userId: session.user?.email,
-      accountType: session.user?.accountType || 'general'
-    })
-  }, [session, status, router, openModal, pathname])
-
+  // Show loading state while session is being verified
+  // Note: Middleware handles redirects for unauthenticated users
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -318,9 +295,23 @@ export default function CompanyDashboard() {
     )
   }
 
+  // Handle edge case where session doesn't exist yet
   if (!session) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying authentication...</p>
+        </div>
+      </div>
+    )
   }
+
+  // Log successful access
+  logRoutingEvent('company_dashboard_access_granted', pathname, 'authenticated', {
+    userId: session.user?.email,
+    accountType: session.user?.accountType || 'general'
+  })
 
   return (
     <DashboardLayout>

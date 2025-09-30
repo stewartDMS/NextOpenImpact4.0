@@ -1,9 +1,8 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useEffect } from 'react'
-import { useAuthModal } from '@/lib/auth-modal-context'
 import { DashboardLayout } from '@/components/DashboardLayout'
 import { AnalyticsCard, ESGScoreCard, ProjectCard } from '@/components/DashboardWidgets'
 import { ProfileSection, TeamManagement } from '@/components/DashboardComponents'
@@ -11,9 +10,7 @@ import { logRoutingEvent, logEnvironmentDiagnostics } from '@/lib/routing-diagno
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const pathname = usePathname()
-  const { openModal } = useAuthModal()
 
   // Log environment diagnostics on component mount
   useEffect(() => {
@@ -26,28 +23,9 @@ export default function DashboardPage() {
 
   console.log("DASHBOARD PAGE SESSION:", session, "STATUS:", status)
 
-  useEffect(() => {
-    if (status === 'loading') {
-      logRoutingEvent('dashboard_auth_loading', pathname, 'loading')
-      return // Still loading
-    }
-
-    if (!session) {
-      logRoutingEvent('dashboard_no_session_redirect', pathname, 'unauthenticated', {
-        redirectTo: '/',
-        reason: 'No session found'
-      })
-      openModal('login')
-      router.push('/')
-      return
-    }
-
-    logRoutingEvent('dashboard_access_granted', pathname, 'authenticated', {
-      userId: session.user?.email,
-      accountType: session.user?.accountType || 'general'
-    })
-  }, [session, status, router, openModal, pathname])
-
+  // Show loading state while session is being verified
+  // Note: Middleware handles redirects for unauthenticated users,
+  // but we still show loading state for better UX
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -59,9 +37,23 @@ export default function DashboardPage() {
     )
   }
 
+  // This should rarely happen due to middleware, but handle it gracefully
   if (!session) {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying authentication...</p>
+        </div>
+      </div>
+    )
   }
+
+  // Log successful access
+  logRoutingEvent('dashboard_access_granted', pathname, 'authenticated', {
+    userId: session.user?.email,
+    accountType: session.user?.accountType || 'general'
+  })
 
   // Mock data for analytics
   const mockProjects = [

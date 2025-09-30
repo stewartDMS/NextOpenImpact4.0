@@ -3,7 +3,7 @@
 import { ReactNode, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { logRoutingEvent } from '@/lib/routing-diagnostics'
 
@@ -58,7 +58,6 @@ const navigationItems = [
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session } = useSession()
-  const router = useRouter()
   const pathname = usePathname()
 
   // Log routing events for dashboard layout
@@ -71,13 +70,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [session, pathname])
 
+  // Show loading state while session is being checked
+  // Note: The middleware.ts file handles server-side route protection,
+  // so this should rarely show for unauthenticated users
   if (!session) {
-    logRoutingEvent('dashboard_layout_no_session', pathname, 'unauthenticated', {
-      redirectTo: '/login',
-      reason: 'No session in DashboardLayout'
-    })
-    router.push('/login')
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying authentication...</p>
+        </div>
+      </div>
+    )
   }
 
   const accountType = session.user?.accountType || 'general'

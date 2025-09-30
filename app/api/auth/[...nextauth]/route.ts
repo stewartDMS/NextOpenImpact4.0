@@ -52,11 +52,24 @@ const authOptions = {
       console.log('- Base URL:', baseUrl);
       console.log('- Computed Base URL:', computedBaseUrl);
       
-      // Always redirect to dashboard after successful authentication
-      // This ensures consistent redirection regardless of the original auth trigger
+      // Handle relative URLs (e.g., "/dashboard")
+      if (url.startsWith('/')) {
+        const fullUrl = `${computedBaseUrl}${url}`;
+        console.log('- Relative URL converted to:', fullUrl);
+        return fullUrl;
+      }
+      
+      // Handle same-origin URLs (e.g., "http://localhost:3000/dashboard")
+      if (url.startsWith(computedBaseUrl)) {
+        console.log('- Same-origin URL accepted:', url);
+        return url;
+      }
+      
+      // For any other case, redirect to dashboard
+      // This ensures users always land on /dashboard after successful auth
       const dashboardUrl = `${computedBaseUrl}/dashboard`;
       
-      console.log('- Final redirect URL:', dashboardUrl);
+      console.log('- Default redirect URL:', dashboardUrl);
       
       return dashboardUrl;
     },

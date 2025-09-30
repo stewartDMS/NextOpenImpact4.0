@@ -44,12 +44,35 @@ A modern Next.js application built for creating positive impact through innovati
    cp .env.example .env.local
    ```
 
-4. Run the development server:
+4. **Configure Authentication** (Important):
+   
+   a. Generate a secure NEXTAUTH_SECRET:
+   ```bash
+   openssl rand -base64 32
+   ```
+   
+   b. Update `.env.local` with the generated secret:
+   ```bash
+   NEXTAUTH_SECRET="your-generated-secret-here"
+   ```
+   
+   c. Configure OAuth provider(s) - for Google:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - Create OAuth 2.0 credentials
+   - Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+   - Copy Client ID and Client Secret to `.env.local`
+   
+   ```bash
+   GOOGLE_CLIENT_ID="your-google-client-id"
+   GOOGLE_CLIENT_SECRET="your-google-client-secret"
+   ```
+
+5. Run the development server:
    ```bash
    npm run dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 📁 Project Structure
 
@@ -73,10 +96,35 @@ A modern Next.js application built for creating positive impact through innovati
 
 The easiest way to deploy this Next.js app is to use the [Vercel Platform](https://vercel.com/new).
 
+#### Environment Variables for Production
+
+**Critical:** Set these environment variables in your Vercel project settings:
+
+1. **NEXTAUTH_URL** - Your production domain
+   ```
+   https://your-domain.vercel.app
+   ```
+   
+2. **NEXTAUTH_SECRET** - Generate a secure secret
+   ```bash
+   openssl rand -base64 32
+   ```
+   Paste the output as the value for `NEXTAUTH_SECRET`
+
+3. **OAuth Credentials** - Configure for your production domain
+   - Update OAuth redirect URIs to include your production domain:
+     - `https://your-domain.vercel.app/api/auth/callback/google`
+   - Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+
+#### Deployment Steps
+
 1. Push your code to a Git repository
 2. Import your repository to Vercel
-3. Vercel will automatically detect Next.js and configure the build settings
-4. Your app will be deployed and available at a Vercel URL
+3. Configure environment variables (see above)
+4. Vercel will automatically detect Next.js and configure the build settings
+5. Your app will be deployed and available at a Vercel URL
+
+**Note:** For preview deployments, the app will automatically use `VERCEL_URL` if `NEXTAUTH_URL` is not explicitly set.
 
 ### Manual Deployment
 

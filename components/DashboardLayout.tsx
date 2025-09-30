@@ -71,12 +71,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [session, pathname])
 
+  // Protect this route - redirect to home if no session
+  // Note: This is a secondary check. The main auth check happens in the page component.
   if (!session) {
     logRoutingEvent('dashboard_layout_no_session', pathname, 'unauthenticated', {
-      redirectTo: '/login',
+      redirectTo: '/',
       reason: 'No session in DashboardLayout'
     })
-    router.push('/login')
+    router.push('/')
     return null
   }
 

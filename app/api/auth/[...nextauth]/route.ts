@@ -53,6 +53,7 @@ const authOptions = {
       console.log('- Computed Base URL:', computedBaseUrl);
       
       // Always redirect to dashboard after successful authentication
+      // This ensures consistent redirection regardless of the original auth trigger
       const dashboardUrl = `${computedBaseUrl}/dashboard`;
       
       console.log('- Final redirect URL:', dashboardUrl);

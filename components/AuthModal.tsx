@@ -134,7 +134,8 @@ function LoginForm() {
   const handleSocialSignIn = async (provider: 'google' | 'github') => {
     setIsLoading(true)
     try {
-      await signIn(provider, { callbackUrl: '/' })
+      // Redirect to dashboard after successful authentication
+      await signIn(provider, { callbackUrl: '/dashboard' })
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {
@@ -321,7 +322,8 @@ function SignupForm() {
   const handleGoogleSignup = async () => {
     setIsLoading(true)
     try {
-      await signIn('google', { callbackUrl: '/' })
+      // Redirect to dashboard after successful authentication
+      await signIn('google', { callbackUrl: '/dashboard' })
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {

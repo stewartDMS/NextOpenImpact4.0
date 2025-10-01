@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import React, { useState, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { useAuthModal } from '@/lib/auth-modal-context'
 
 interface AuthModalProps {
@@ -11,6 +12,18 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { modalType } = useAuthModal()
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  
+  // Redirect to dashboard when user successfully authenticates
+  useEffect(() => {
+    if (status === 'authenticated' && session && isOpen) {
+      console.log('✅ User authenticated via modal, redirecting to dashboard');
+      onClose();
+      // Use router.push for client-side navigation to dashboard
+      router.push('/dashboard');
+    }
+  }, [status, session, isOpen, onClose, router]);
   
   if (!isOpen) return null
 

@@ -100,21 +100,52 @@ The easiest way to deploy this Next.js app is to use the [Vercel Platform](https
 
 **Critical:** Set these environment variables in your Vercel project settings:
 
-1. **NEXTAUTH_URL** - Your production domain
+1. **NEXTAUTH_URL** (Required for Production & Preview) - Your deployment domain
+   
+   For **Production** environment:
    ```
    https://your-domain.vercel.app
    ```
+   Or use your custom domain if configured.
    
-2. **NEXTAUTH_SECRET** - Generate a secure secret
+   For **Preview** environment (optional but recommended):
+   - You can set it to your main domain, or
+   - Omit it entirely - the app will automatically use `VERCEL_URL`
+   
+2. **NEXTAUTH_SECRET** (Required) - Generate a secure secret
    ```bash
    openssl rand -base64 32
    ```
-   Paste the output as the value for `NEXTAUTH_SECRET`
+   Copy the output and add it as the value for `NEXTAUTH_SECRET` in Vercel.
+   
+   **Important:** Use the **same secret** for all environments (Production, Preview, Development) 
+   to maintain session compatibility. If you use different secrets, users will be logged out 
+   when switching between environments.
 
-3. **OAuth Credentials** - Configure for your production domain
-   - Update OAuth redirect URIs to include your production domain:
-     - `https://your-domain.vercel.app/api/auth/callback/google`
-   - Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+3. **OAuth Credentials** (Required) - Configure for your production domain
+   
+   Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
+   - Create or edit your OAuth 2.0 Client
+   - Add authorized redirect URIs for **each environment**:
+     - Production: `https://your-domain.vercel.app/api/auth/callback/google`
+     - Preview (optional): `https://your-preview-url.vercel.app/api/auth/callback/google`
+     - Development: `http://localhost:3000/api/auth/callback/google`
+   - Copy the Client ID and Client Secret
+   - Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Vercel environment variables
+
+**How to set environment variables in Vercel:**
+
+1. Go to your project dashboard on Vercel
+2. Navigate to **Settings** → **Environment Variables**
+3. Add each variable with appropriate values
+4. Select which environments it applies to (Production, Preview, Development)
+5. Save and redeploy your application
+
+**Important Notes:**
+- Environment variables are only loaded during build time and runtime
+- After adding or changing environment variables, you must **redeploy** your application
+- For preview deployments, Vercel automatically provides `VERCEL_URL` which the app can use if `NEXTAUTH_URL` is not set
+- Always use HTTPS in production (Vercel provides this automatically)
 
 #### Deployment Steps
 
@@ -144,6 +175,56 @@ The easiest way to deploy this Next.js app is to use the [Vercel Platform](https
 - `npm run build` - Build for production
 - `npm run start` - Start production server  
 - `npm run lint` - Run ESLint
+
+## 🔧 Troubleshooting
+
+### Authentication Issues
+
+**Problem: User stays on landing page after login**
+
+**Causes & Solutions:**
+1. **Missing NEXTAUTH_SECRET**
+   - Generate a secret: `openssl rand -base64 32`
+   - Add it to `.env.local` (development) or Vercel environment variables (production)
+
+2. **Incorrect NEXTAUTH_URL**
+   - Development: Should be `http://localhost:3000`
+   - Production: Should match your actual domain (e.g., `https://your-app.vercel.app`)
+   - Check that it doesn't have trailing slashes
+
+3. **OAuth redirect URI mismatch**
+   - Verify that your OAuth provider's redirect URI matches: `https://your-domain/api/auth/callback/google`
+   - The domain must exactly match your NEXTAUTH_URL
+
+4. **Session not persisting**
+   - Clear browser cookies and try again
+   - Verify NEXTAUTH_SECRET is set and identical across all environments
+   - Check browser console for errors
+
+**Problem: OAuth callback fails**
+
+**Solution:**
+- Ensure OAuth redirect URIs are correctly configured in your OAuth provider (Google Cloud Console)
+- Verify NEXTAUTH_URL is set correctly
+- Check that your domain uses HTTPS in production
+
+### Vercel Deployment Issues
+
+**Problem: Environment variables not working**
+
+**Solution:**
+- After setting environment variables in Vercel, you must **redeploy** the application
+- Go to Deployments → Click the three dots → Redeploy
+
+**Problem: Preview deployments have different URLs**
+
+**Solution:**
+- For preview deployments, you can either:
+  - Set NEXTAUTH_URL to your main production domain in preview environment
+  - Omit NEXTAUTH_URL (the app will automatically use VERCEL_URL)
+  - Add all preview URLs to your OAuth redirect URIs (not recommended)
+
+For more details, see [AUTHENTICATION_FLOW.md](./AUTHENTICATION_FLOW.md)
 
 ## 🎯 API Endpoints
 

@@ -19,21 +19,22 @@ declare module "next-auth" {
  * Get the correct base URL for the current environment
  * 
  * Priority:
- * 1. VERCEL_URL in production (for Vercel deployments)
- * 2. NEXTAUTH_URL if explicitly set
+ * 1. NEXTAUTH_URL if explicitly set (recommended for all environments)
+ * 2. VERCEL_URL for Vercel deployments (preview and production)
  * 3. localhost:3000 for local development
  * 
  * @returns The base URL for the application
  */
 function getBaseUrl() {
-  // In production, prefer VERCEL_URL, then NEXTAUTH_URL
-  if (process.env.VERCEL_URL && process.env.NODE_ENV === 'production') {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  
-  // Use NEXTAUTH_URL if explicitly set
+  // Use NEXTAUTH_URL if explicitly set (highest priority)
   if (process.env.NEXTAUTH_URL) {
     return process.env.NEXTAUTH_URL;
+  }
+  
+  // For Vercel deployments (both preview and production), use VERCEL_URL
+  if (process.env.VERCEL_URL) {
+    // VERCEL_URL doesn't include protocol, so add https://
+    return `https://${process.env.VERCEL_URL}`;
   }
   
   // Fallback to localhost for development
@@ -90,35 +91,45 @@ const authOptions = {
      * 2. We check if the URL is relative or absolute
      * 3. Default behavior: redirect to /dashboard
      * 
-     * @param url - URL to redirect to (provided by NextAuth)
-     * @param baseUrl - Base URL of the application
-     * @returns URL to redirect the user to
+     * IMPORTANT: NextAuth expects relative paths (e.g., "/dashboard") for same-domain redirects.
+     * Returning full URLs can cause redirect issues in some environments.
+     * 
+     * @param url - URL to redirect to (provided by NextAuth or callbackUrl param)
+     * @param baseUrl - Base URL of the application (auto-detected by NextAuth)
+     * @returns Path to redirect the user to (relative path for same-domain)
      */
     async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
       const computedBaseUrl = getBaseUrl();
       
       console.log('🔄 NextAuth Redirect Callback:');
       console.log('- Requested URL:', url);
-      console.log('- Base URL:', baseUrl);
+      console.log('- NextAuth Base URL:', baseUrl);
       console.log('- Computed Base URL:', computedBaseUrl);
       
-      // If the URL is relative (starts with /), use computedBaseUrl as base
+      // If URL is already relative (starts with /), return it as-is
       if (url.startsWith('/')) {
-        const fullUrl = `${computedBaseUrl}${url}`;
-        console.log('- Relative URL detected, redirecting to:', fullUrl);
-        return fullUrl;
-      }
-      
-      // If URL is from our domain, allow it
-      if (url.startsWith(computedBaseUrl)) {
-        console.log('- Same domain URL, allowing:', url);
+        console.log('- Relative URL detected, using:', url);
         return url;
       }
       
-      // Default: redirect to dashboard after successful authentication
-      const dashboardUrl = `${computedBaseUrl}/dashboard`;
-      console.log('- Default redirect to dashboard:', dashboardUrl);
-      return dashboardUrl;
+      // If URL is from our domain (starts with baseUrl or computedBaseUrl), 
+      // extract the path and return it as a relative URL
+      if (url.startsWith(baseUrl)) {
+        const path = url.substring(baseUrl.length) || '/dashboard';
+        console.log('- Same domain URL (baseUrl), extracting path:', path);
+        return path;
+      }
+      
+      if (url.startsWith(computedBaseUrl)) {
+        const path = url.substring(computedBaseUrl.length) || '/dashboard';
+        console.log('- Same domain URL (computedBaseUrl), extracting path:', path);
+        return path;
+      }
+      
+      // For external URLs or unrecognized patterns, redirect to dashboard
+      // This is a security measure to prevent open redirects
+      console.log('- External or unrecognized URL, defaulting to /dashboard');
+      return '/dashboard';
     },
     
     /**

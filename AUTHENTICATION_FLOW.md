@@ -2,6 +2,25 @@
 
 This document explains how authentication works in NextOpenImpact 4.0, including the login flow, route protection, and session management.
 
+## Recent Updates
+
+**Last Updated:** December 2024
+
+### What's Fixed
+- ✅ **Redirect Issue Fixed**: NextAuth redirect callback now returns relative paths (`/dashboard`) instead of full URLs, fixing the issue where users stayed on the landing page after login
+- ✅ **Client-Side Redirect Added**: AuthModal now automatically redirects to dashboard when authentication succeeds
+- ✅ **Environment Variable Priority Updated**: NEXTAUTH_URL now takes priority over VERCEL_URL for better control
+- ✅ **Enhanced Middleware**: Added detailed logging and authorization callbacks for better debugging
+- ✅ **Improved Documentation**: Updated README and .env.example with comprehensive Vercel deployment guides
+
+### How It Works Now
+1. User clicks "Sign In with Google" in the AuthModal
+2. User completes OAuth flow with Google
+3. NextAuth redirect callback returns `/dashboard` (relative path)
+4. User is redirected to dashboard by NextAuth
+5. AuthModal's useEffect detects authentication and ensures client-side redirect as backup
+6. Middleware protects dashboard routes and keeps session active
+
 ## Overview
 
 The application uses [NextAuth.js](https://next-auth.js.org/) v4 for authentication with the following features:
@@ -22,7 +41,7 @@ const authOptions = {
   providers: [GoogleProvider(...)],     // OAuth providers
   pages: { signIn: '/' },               // Custom sign-in page
   callbacks: {
-    redirect: ...,                      // Post-login redirect logic
+    redirect: ...,                      // Post-login redirect logic (returns relative paths)
     session: ...,                       // Session customization
   }
 }
@@ -30,15 +49,23 @@ const authOptions = {
 
 **Key Points:**
 - `NEXTAUTH_SECRET` is **required** for session token encryption
-- Redirect callback determines where users go after login (default: `/dashboard`)
+- Redirect callback returns relative paths (e.g., `/dashboard`) for same-domain redirects
 - Session callback adds custom fields (like `accountType`) to the session
+- `getBaseUrl()` prioritizes: NEXTAUTH_URL → VERCEL_URL → localhost:3000
 
 ### 2. Middleware (`middleware.ts`)
 
 Server-side route protection that runs **before** page rendering:
 
 ```typescript
-export { default } from 'next-auth/middleware'
+export default withAuth(
+  function middleware(req) { /* ... */ },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token
+    }
+  }
+)
 
 export const config = {
   matcher: ['/dashboard/:path*']  // Protected routes
@@ -277,11 +304,54 @@ NEXTAUTH_SECRET="generated-secret-here"
 
 ### Enable Debug Logs
 
-The application includes comprehensive logging:
+The application includes comprehensive logging for debugging authentication issues:
 
-1. **NextAuth logs:** Check server console for `🔧 NextAuth Environment Configuration`
-2. **Routing logs:** Check browser console for `🔍 ROUTING DIAGNOSTIC` messages
-3. **Dashboard logs:** Check for `DASHBOARD PAGE SESSION:` messages
+1. **NextAuth Server Logs** (check server console/terminal):
+   - `🔧 NextAuth Environment Configuration` - Shows detected environment variables and computed base URL
+   - `🔄 NextAuth Redirect Callback` - Shows redirect logic and URL transformations
+   
+2. **Middleware Logs** (check server console/terminal):
+   - `🔐 Middleware Authorization Check` - Shows path being accessed and authentication status
+   - Logs whether access is granted or redirecting to sign-in
+   
+3. **Client-Side Logs** (check browser console):
+   - `✅ User authenticated via modal, redirecting to dashboard` - Shows successful authentication in AuthModal
+   - `🔍 ROUTING DIAGNOSTIC` - Shows routing events and environment info
+   - `DASHBOARD PAGE SESSION` - Shows session data on dashboard pages
+
+4. **Routing Diagnostics** (check browser console):
+   - `🔧 ENVIRONMENT DIAGNOSTICS` - Shows all routing-related environment variables
+   - Checks for common issues like localhost URLs in production
+
+### Common Debug Scenarios
+
+#### Check if NEXTAUTH_SECRET is set
+```bash
+# In your terminal/server logs, look for:
+🔧 NextAuth Environment Configuration:
+- NEXTAUTH_SECRET: [defined/undefined]
+```
+
+#### Check redirect behavior
+```bash
+# After OAuth login, look for:
+🔄 NextAuth Redirect Callback:
+- Requested URL: http://localhost:3000/dashboard
+- NextAuth Base URL: http://localhost:3000
+- Computed Base URL: http://localhost:3000
+- Same domain URL (baseUrl), extracting path: /dashboard
+```
+
+The redirect should return a relative path like `/dashboard`, not a full URL.
+
+#### Check middleware protection
+```bash
+# When accessing /dashboard, look for:
+🔐 Middleware Authorization Check:
+- Path: /dashboard
+- Authenticated: true
+- Result: Access granted
+```
 
 ### Configuration Checker
 
@@ -291,6 +361,18 @@ The app includes a configuration checker that runs on startup:
 - Provides recommendations
 
 Look for `🔍 CONFIGURATION CHECK:` in the console.
+
+### Debug Checklist
+
+If authentication isn't working, check:
+
+- [ ] `NEXTAUTH_SECRET` is set and is the same across all environments
+- [ ] `NEXTAUTH_URL` matches your deployment URL (or is omitted for Vercel with VERCEL_URL)
+- [ ] OAuth redirect URIs are configured correctly in Google Cloud Console
+- [ ] Server logs show `🔧 NextAuth Environment Configuration` with correct values
+- [ ] Redirect callback returns relative paths (e.g., `/dashboard`), not full URLs
+- [ ] Browser has cookies enabled and not blocking third-party cookies
+- [ ] No console errors in browser or server logs
 
 ## Additional Resources
 
